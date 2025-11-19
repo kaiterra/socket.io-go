@@ -1,4 +1,4 @@
-module github.com/karagenc/socket.io-go
+module github.com/kaiterra/socket.io-go
 
 go 1.22
 

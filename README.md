@@ -2,6 +2,8 @@
 
 This is a [Socket.IO](https://socket.io) library for Go.
 
+> In this fork, support for webtransport/QUIC has been removed. Repos under github.com/quic-go haven't stabilized their APIs yet, so breaking changes are frequent. When building upstream against the latest version of these repos, the build fails.
+
 ## Caveats & incompatibilities
 
 - When doing a server side emit, ack callback cannot be given.
