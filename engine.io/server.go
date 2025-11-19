@@ -8,13 +8,11 @@ import (
 	"time"
 
 	"github.com/karagenc/socket.io-go/internal/sync"
-	"github.com/quic-go/webtransport-go"
 
 	"github.com/karagenc/socket.io-go/engine.io/parser"
 	"github.com/karagenc/socket.io-go/engine.io/transport"
 	"github.com/karagenc/socket.io-go/engine.io/transport/polling"
 	_websocket "github.com/karagenc/socket.io-go/engine.io/transport/websocket"
-	_webtransport "github.com/karagenc/socket.io-go/engine.io/transport/webtransport"
 
 	"nhooyr.io/websocket"
 )
@@ -41,9 +39,6 @@ type (
 		MaxBufferSize        int64
 		DisableMaxBufferSize bool
 
-		// For accepting WebTransport connections
-		WebTransportServer *webtransport.Server
-
 		// Custom WebSocket options to use.
 		WebSocketAcceptOptions *websocket.AcceptOptions
 
@@ -64,8 +59,6 @@ type (
 
 		maxBufferSize        int64
 		disableMaxBufferSize bool
-
-		webTransportServer *webtransport.Server
 
 		wsAcceptOptions *websocket.AcceptOptions
 
@@ -102,8 +95,6 @@ func newServer(onSocket NewSocketCallback, config *ServerConfig, testWaitUpgrade
 
 		maxBufferSize:        config.MaxBufferSize,
 		disableMaxBufferSize: config.DisableMaxBufferSize,
-
-		webTransportServer: config.WebTransportServer,
 
 		wsAcceptOptions: config.WebSocketAcceptOptions,
 
@@ -231,7 +222,7 @@ func (s *Server) handleHandshake(w http.ResponseWriter, r *http.Request) {
 		writeServerError(w, ErrorBadHandshakeMethod)
 		return
 	} else if r.Method == "CONNECT" && r.ProtoMajor == 3 && n == "" {
-		s.onWebTransport(w, r)
+		writeServerError(w, ErrorUnknownTransport)
 		return
 	}
 
@@ -257,14 +248,8 @@ func (s *Server) handleHandshake(w http.ResponseWriter, r *http.Request) {
 	case "polling":
 		t = polling.NewServerTransport(c, s.maxBufferSize, s.PollTimeout())
 		upgrades = []string{"websocket"}
-		if s.webTransportServer != nil {
-			upgrades = append(upgrades, "webtransport")
-		}
 	case "websocket":
 		t = _websocket.NewServerTransport(c, s.maxBufferSize, supportsBinary, s.wsAcceptOptions)
-		if s.webTransportServer != nil {
-			upgrades = []string{"webtransport"}
-		}
 	default:
 		writeServerError(w, ErrorUnknownTransport)
 		return
@@ -290,63 +275,6 @@ func (s *Server) handleHandshake(w http.ResponseWriter, r *http.Request) {
 	}
 
 	t.PostHandshake(nil)
-}
-
-func (s *Server) onWebTransport(w http.ResponseWriter, r *http.Request) {
-	if s.webTransportServer == nil {
-		writeServerError(w, ErrorUnknownTransport)
-		return
-	}
-
-	var (
-		c = transport.NewCallbacks()
-		t = _webtransport.NewServerTransport(c, s.maxBufferSize, s.webTransportServer)
-	)
-
-	sid, err := t.Handshake(nil, w, r)
-	if err != nil {
-		s.debug.Log("Handshake error", err)
-		t.Close()
-		return
-	}
-	if sid == "" {
-		sid, err = s.generateSID()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			s.onError(err)
-			t.Close()
-			return
-		}
-
-		socket := s.newSocket(w, sid, nil, c, t)
-		if socket == nil {
-			t.Close()
-			return
-		}
-
-		handshakePacket, err := s.newHandshakePacket(sid, nil)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			s.onError(wrapInternalError(fmt.Errorf("newHandshakePacket failed: %w", err)))
-			t.Close()
-			return
-		}
-		t.PostHandshake(handshakePacket)
-	} else {
-		socket, ok := s.store.get(sid)
-		if !ok {
-			writeServerError(w, ErrorUnknownSID)
-			t.Close()
-			return
-		}
-
-		if socket.Transport().Name() == "webtransport" {
-			s.debug.Log("already upgraded to webtransport")
-			t.Close()
-		} else {
-			s.maybeUpgrade(w, r, socket, "webtransport", t, c)
-		}
-	}
 }
 
 func (s *Server) newSocket(
@@ -451,12 +379,6 @@ func (s *Server) maybeUpgrade(
 		}
 		if s.testWaitUpgrade {
 			time.Sleep(1001 * time.Millisecond)
-		}
-	case "webtransport":
-		if t == nil {
-			s.debug.Log("t == nil. This shouldn't have happened")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
 		}
 	default:
 		s.debug.Log("Invalid upgradeTo", upgradeTo)
