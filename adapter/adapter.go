@@ -4,7 +4,7 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/karagenc/socket.io-go/parser"
+	"github.com/kaiterra/socket.io-go/parser"
 )
 
 type (

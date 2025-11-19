@@ -4,10 +4,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/karagenc/socket.io-go/internal/sync"
+	"github.com/kaiterra/socket.io-go/internal/sync"
 
-	"github.com/karagenc/socket.io-go/engine.io/parser"
-	"github.com/karagenc/socket.io-go/engine.io/transport"
+	"github.com/kaiterra/socket.io-go/engine.io/parser"
+	"github.com/kaiterra/socket.io-go/engine.io/transport"
 )
 
 type serverSocket struct {

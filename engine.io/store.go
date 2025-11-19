@@ -1,7 +1,7 @@
 package eio
 
 import (
-	"github.com/karagenc/socket.io-go/internal/sync"
+	"github.com/kaiterra/socket.io-go/internal/sync"
 )
 
 type socketStore struct {

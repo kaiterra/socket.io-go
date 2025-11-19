@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/karagenc/socket.io-go/engine.io/parser"
-	"github.com/karagenc/socket.io-go/internal/utils"
+	"github.com/kaiterra/socket.io-go/engine.io/parser"
+	"github.com/kaiterra/socket.io-go/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 

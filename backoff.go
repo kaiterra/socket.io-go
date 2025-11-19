@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/karagenc/socket.io-go/internal/sync"
+	"github.com/kaiterra/socket.io-go/internal/sync"
 )
 
 type backoff struct {

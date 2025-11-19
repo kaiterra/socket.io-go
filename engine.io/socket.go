@@ -3,7 +3,7 @@ package eio
 import (
 	"time"
 
-	"github.com/karagenc/socket.io-go/engine.io/parser"
+	"github.com/kaiterra/socket.io-go/engine.io/parser"
 )
 
 type (

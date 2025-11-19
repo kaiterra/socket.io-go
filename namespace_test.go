@@ -5,9 +5,9 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/karagenc/socket.io-go/adapter"
-	"github.com/karagenc/socket.io-go/internal/sync"
-	"github.com/karagenc/socket.io-go/internal/utils"
+	"github.com/kaiterra/socket.io-go/adapter"
+	"github.com/kaiterra/socket.io-go/internal/sync"
+	"github.com/kaiterra/socket.io-go/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 

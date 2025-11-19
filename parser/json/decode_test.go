@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/karagenc/socket.io-go/parser"
-	"github.com/karagenc/socket.io-go/parser/json/serializer/stdjson"
+	"github.com/kaiterra/socket.io-go/parser"
+	"github.com/kaiterra/socket.io-go/parser/json/serializer/stdjson"
 )
 
 func TestDecode(t *testing.T) {

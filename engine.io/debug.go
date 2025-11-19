@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/karagenc/socket.io-go/internal/sync"
+	"github.com/kaiterra/socket.io-go/internal/sync"
 	"github.com/xiegeo/coloredgoroutine"
 )
 
