@@ -8,14 +8,12 @@ import (
 
 	"github.com/karagenc/socket.io-go/internal/sync"
 
-	_webtransport "github.com/quic-go/webtransport-go"
 	_websocket "nhooyr.io/websocket"
 
 	"github.com/karagenc/socket.io-go/engine.io/parser"
 	"github.com/karagenc/socket.io-go/engine.io/transport"
 	"github.com/karagenc/socket.io-go/engine.io/transport/polling"
 	"github.com/karagenc/socket.io-go/engine.io/transport/websocket"
-	"github.com/karagenc/socket.io-go/engine.io/transport/webtransport"
 )
 
 var errUpgradeTimeoutExceeded = fmt.Errorf("upgradeTimeout exceeded")
@@ -34,9 +32,6 @@ type clientSocket struct {
 
 	// HTTP headers to use on transports.
 	requestHeader *transport.RequestHeader
-
-	// WebTransport dialer to use on transports
-	webTransportDialer *_webtransport.Dialer
 
 	// WebSocket dialer to use on transports
 	wsDialOptions *_websocket.DialOptions
@@ -84,15 +79,6 @@ func (s *clientSocket) connect(transports []string) (err error) {
 				*s.url,
 				s.requestHeader,
 				s.wsDialOptions,
-			)
-		case "webtransport":
-			s.transport = webtransport.NewClientTransport(
-				c,
-				"",
-				ProtocolVersion,
-				*s.url,
-				s.requestHeader,
-				s.webTransportDialer,
 			)
 		default:
 			err = fmt.Errorf("eio: invalid transport name: %s", name)
@@ -153,10 +139,7 @@ func (s *clientSocket) handleTimeout() {
 }
 
 func (s *clientSocket) maybeUpgrade(transports []string, upgrades []string) {
-	if s.TransportName() == "webtransport" {
-		s.debug.Log("maybeUpgrade", "current transport is webtransport. already upgraded")
-		return
-	} else if s.TransportName() == "websocket" && !findTransport(upgrades, "webtransport") {
+	if s.TransportName() == "websocket" && !findTransport(upgrades, "webtransport") {
 		s.debug.Log("maybeUpgrade", "current transport is websocket, and there are no further upgrades. already upgraded")
 		return
 	} else if !findTransport(upgrades, "websocket") && !findTransport(upgrades, "webtransport") {
@@ -165,16 +148,6 @@ func (s *clientSocket) maybeUpgrade(transports []string, upgrades []string) {
 	} else if !findTransport(transports, "websocket") && !findTransport(transports, "webtransport") {
 		s.debug.Log("maybeUpgrade", "couldn't find 'websocket' and 'webtransport' in `Transports` configuration option")
 		return
-	}
-
-	// Prioritize webtransport
-	if findTransport(transports, "webtransport") && findTransport(transports, "websocket") {
-		for i, transport := range transports {
-			if transport == "webtransport" {
-				transports = append(transports[:i], transports[i+1:]...)
-			}
-		}
-		transports = append([]string{"webtransport"}, transports...)
 	}
 
 	for _, upgradeTo := range transports {
@@ -190,9 +163,6 @@ func (s *clientSocket) maybeUpgrade(transports []string, upgrades []string) {
 		case "websocket":
 			s.debug.Log("maybeUpgrade", "upgrading from", s.TransportName(), "to websocket")
 			t = websocket.NewClientTransport(c, s.sid, ProtocolVersion, *s.url, s.requestHeader, s.wsDialOptions)
-		case "webtransport":
-			s.debug.Log("maybeUpgrade", "upgrading from", s.TransportName(), "to webtransport")
-			t = webtransport.NewClientTransport(c, s.sid, ProtocolVersion, *s.url, s.requestHeader, s.webTransportDialer)
 		default:
 			s.debug.Log("skip", upgradeTo)
 		}

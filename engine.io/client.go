@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/karagenc/socket.io-go/engine.io/transport"
-	"github.com/quic-go/webtransport-go"
 	"nhooyr.io/websocket"
 )
 
@@ -34,9 +33,6 @@ type ClientConfig struct {
 	// If this is a http.Transport it will be cloned and timeout(s) will be set later on.
 	// If not, it is the user's responsibility to set a proper timeout so when polling takes too long, we don't fail.
 	HTTPTransport http.RoundTripper
-
-	// Custom WebTransport dialer to use
-	WebTransportDialer *webtransport.Dialer
 
 	// Custom WebSocket dialer to use
 	WebSocketDialOptions *websocket.DialOptions
@@ -83,7 +79,7 @@ func dial(rawURL string, callbacks *Callbacks, config *ClientConfig, testWaitUpg
 	if len(config.Transports) > 0 {
 		transports = config.Transports
 	} else {
-		transports = []string{"polling", "webtransport", "websocket"}
+		transports = []string{"polling", "websocket"}
 	}
 
 	if config.UpgradeTimeout != 0 {
@@ -92,12 +88,6 @@ func dial(rawURL string, callbacks *Callbacks, config *ClientConfig, testWaitUpg
 
 	if socket.upgradeDone == nil {
 		socket.upgradeDone = func(transportName string) {}
-	}
-
-	if config.WebTransportDialer != nil {
-		socket.webTransportDialer = config.WebTransportDialer
-	} else {
-		socket.webTransportDialer = &webtransport.Dialer{}
 	}
 
 	if config.WebSocketDialOptions != nil {
